@@ -1,17 +1,18 @@
-import urllib.request
+import socket
+import ssl
 import sys
 
 def send_get_request(url):
-    headers = {
-        'Host': 'www.example.com',
-        'Connection': 'Keep-Alive',
-    }
-    try:
-        request = urllib.request.Request(url, headers=headers, method='GET')
-        response = urllib.request.urlopen(request)
-        return request, response
-    except urllib.error.URLError as e:
-        return None, str(e)
+    context = ssl.create_default_context()
+    conn = context.wrap_socket(socket.socket(socket.AF_INET), server_hostname=url)
+
+    conn.connect((url, 443))
+
+    conn.send(b"GET / HTTP/1.1\r\n\r\n")
+
+    conn.send(b"GET / HTTP/1.1\r\n\r\n")
+
+    print(conn.recv(1024))
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -19,18 +20,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     url = sys.argv[1]
-
-    request, response = send_get_request(url)
-
-    if request is not None:
-        print(f"{request.get_method()} {request.full_url}")
-        
-        # Print any request headers if needed
-        for header, value in request.headers.items():
-            print(f"{header}: {value}")
-
-    if response is not None:
-        content = response.read().decode('utf-8')
-        print(content)
-    else:
-        print("Error occurred while making the request.")
+    send_get_request(url)
