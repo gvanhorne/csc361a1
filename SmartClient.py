@@ -65,8 +65,30 @@ def send_get_request(url):
 
         # Receive and print the server's response (up to 1024 bytes)
         print('---Response Header---')
-        response = conn.recv(1024)
-        print(response.decode("utf-8"))
+        # Receive and print the response headers
+        response_headers = b""
+        while True:
+            response_chunk = conn.recv(1024)
+            if not response_chunk:
+                break
+            response_headers += response_chunk
+
+            # Check if the headers are complete (i.e., if there is a blank line)
+            if b"\r\n\r\n" in response_headers:
+                headers, _ = response_headers.split(b"\r\n\r\n", 1)
+                print(headers.decode("utf-8"))
+                break
+
+        # Receive and print the entire response body
+        # print("---Response body---")
+        # response_body = b""
+        # while True:
+        #     response_chunk = conn.recv(1024)
+        #     if not response_chunk:
+        #         break
+        #     response_body += response_chunk
+        # print(response_body.decode("utf-8"))
+
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
