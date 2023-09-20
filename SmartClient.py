@@ -1,6 +1,17 @@
 import socket
 import ssl
 import sys
+def print_response(response):
+    """
+    Print the HTTP response received from the server.
+
+    Parameters:
+    response (bytes): The response data to be printed.
+
+    Returns:
+    None
+    """
+    print(response.decode("utf-8"))
 
 def send_get_request(url):
     """
@@ -28,7 +39,7 @@ def send_get_request(url):
 
         # Receive and print the server's response (up to 1024 bytes)
         response = conn.recv(1024)
-        print(response)
+        print_response(response)
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
