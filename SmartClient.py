@@ -3,6 +3,32 @@ import ssl
 import sys
 from urllib.parse import urlparse
 
+def parse_url(url):
+    """
+    Parse a URL and extract its path and hostname.
+
+    If the URL doesn't include a scheme, "http://" is added by default.
+
+    Parameters:
+    url (str): The URL to parse.
+
+    Returns:
+    tuple: A tuple containing the path and hostname.
+    """
+    # Parse the URL
+    parsed_url = urlparse(url)
+    scheme = parsed_url.scheme
+
+    # Ensure the scheme is "http://" if it's missing
+    if not scheme:
+        parsed_url = urlparse(f"http://{url}", scheme='http')
+
+    # Extract the scheme, path, and hostname
+    path = parsed_url.path if parsed_url.path else "/"
+    hostname = parsed_url.netloc
+
+    return path, hostname
+
 def send_get_request(url):
     """
     Send an HTTP GET request to a given URL and print the response.
@@ -14,13 +40,7 @@ def send_get_request(url):
     None
     """
     # Parse the URL
-    parsed_url = urlparse(url)
-    scheme = parsed_url.scheme
-    # Ensure the scheme is "http://" if it's missing
-    if not scheme:
-        parsed_url = urlparse(f"http://{url}", scheme='http')
-    path = parsed_url.path if parsed_url.path else "/"
-    hostname = parsed_url.netloc
+    path, hostname = parse_url(url)
 
     # Create an SSL context to establish a secure connection
     context = ssl.create_default_context()
