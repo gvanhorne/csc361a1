@@ -1,7 +1,6 @@
 import socket
 import ssl
 import sys
-from urllib.parse import urlparse
 
 def parse_url(url):
     """
@@ -15,19 +14,27 @@ def parse_url(url):
     Returns:
     tuple: A tuple containing the path and hostname.
     """
-    # Parse the URL
-    parsed_url = urlparse(url)
-    scheme = parsed_url.scheme
+    # Check if the URL starts with "http://" or "https://"
+    if url.startswith("http://"):
+        scheme = "http"
+        url = url[len("http://"):]
+    elif url.startswith("https://"):
+        scheme = "https"
+        url = url[len("https://"):]
+    else:
+        # Default to "http://" if no scheme is specified
+        scheme = "http"
+        
 
-    # Ensure the scheme is "http://" if it's missing
-    if not scheme:
-        parsed_url = urlparse(f"http://{url}", scheme='http')
+    # Split the URL into hostname and path
+    parts = url.split("/", 1)
+    if len(parts) == 1:
+        hostname = parts[0]
+        path = "/"
+    else:
+        hostname, path = parts
 
-    # Extract the scheme, path, and hostname
-    path = parsed_url.path if parsed_url.path else "/"
-    hostname = parsed_url.netloc
-
-    return path, hostname
+    return path, f"{hostname}"
 
 def send_get_request(url):
     """
