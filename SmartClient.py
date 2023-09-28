@@ -14,18 +14,6 @@ def parse_url(url):
     Returns:
     tuple: A tuple containing the path and hostname.
     """
-    # Check if the URL starts with "http://" or "https://"
-    if url.startswith("http://"):
-        scheme = "http"
-        url = url[len("http://"):]
-    elif url.startswith("https://"):
-        scheme = "https"
-        url = url[len("https://"):]
-    else:
-        # Default to "http://" if no scheme is specified
-        scheme = "http"
-        
-
     # Split the URL into hostname and path
     parts = url.split("/", 1)
     if len(parts) == 1:
@@ -65,36 +53,22 @@ def send_get_request(url):
         request = b"GET " + path.encode() + b" HTTP/1.1\r\n"
         request += b"Host: " + hostname.encode() + b"\r\n"
         request += b"Connection: Keep-Alive\r\n\r\n"
-        print(request.decode("utf-8")[:-1])
+        print(request.decode()[:-1])
         conn.send(request)
         print('---Request End---')
         print('HTTP request sent, awaiting response. . .\n')
 
-        # Receive and print the server's response (up to 1024 bytes)
-        print('---Response Header---')
-        # Receive and print the response headers
-        response_headers = b""
+        full_msg = b""
         while True:
             response_chunk = conn.recv(1024)
             if not response_chunk:
+                headers, body = full_msg.split(b"\r\n\r\n", 1)
+                print('---Response headers---')
+                print(headers.decode())
+                print('---Response body---')
+                print(body.decode())
                 break
-            response_headers += response_chunk
-
-            # Check if the headers are complete (i.e., if there is a blank line)
-            if b"\r\n\r\n" in response_headers:
-                headers, _ = response_headers.split(b"\r\n\r\n", 1)
-                print(headers.decode("utf-8"))
-                break
-
-        # Receive and print the entire response body
-        # print("---Response body---")
-        # response_body = b""
-        # while True:
-        #     response_chunk = conn.recv(1024)
-        #     if not response_chunk:
-        #         break
-        #     response_body += response_chunk
-        # print(response_body.decode("utf-8"))
+            full_msg += response_chunk
 
     except Exception as e:
         print(f"An error occurred: {e}")
