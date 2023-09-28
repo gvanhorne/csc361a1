@@ -14,6 +14,12 @@ def parse_url(url):
     Returns:
     tuple: A tuple containing the path and hostname.
     """
+    # Check if the URL starts with "http://" or "https://"
+    if url.startswith("http://"):
+        url = url[len("http://"):]
+    elif url.startswith('https://'):
+        url = url[len("https://"):]
+        
     # Split the URL into hostname and path
     parts = url.split("/", 1)
     if len(parts) == 1:
@@ -45,14 +51,14 @@ def send_get_request(url):
 
     try:
         # Connect to the server on port 443 (HTTPS)
-        conn.connect((url, 443))
+        conn.connect((hostname, 443))
 
         # Send an HTTP GET request to the server
         # Construct the HTTP GET request with the 'Connection: Keep-Alive' header
         print('---Request Begin---')
         request = b"GET " + path.encode() + b" HTTP/1.1\r\n"
         request += b"Host: " + hostname.encode() + b"\r\n"
-        request += b"Connection: Keep-Alive\r\n\r\n"
+        request += b"Connection: close\r\n\r\n"
         print(request.decode()[:-1])
         conn.send(request)
         print('---Request End---')
