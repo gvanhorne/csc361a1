@@ -2,7 +2,22 @@ import socket
 import ssl
 import sys
 
-def print_authorization_status(response):
+def print_authorization_status(response: str):
+    """
+    Print the authorization status based on the provided response.
+
+    Args:
+        response (str): The HTTP response message or status.
+
+    Example:
+        >>> response = '401 Unauthorized'
+        >>> print_authorization_status(response)
+        3. Password protected: yes
+
+    This function checks the provided response message for common HTTP
+    status codes related to authorization and prints whether the resource
+    is password protected or not.
+    """
     if '401 Unauthorized' in response:
         print("3. Password protected: yes")
     elif '403 Not authenticated' in response:
@@ -10,7 +25,7 @@ def print_authorization_status(response):
     elif '400 Forbidden' in response:
         print("3. Password protected: yes")
     else:
-        print(f"Password protected: no")
+        print("3. Password protected: no")
 
 def print_cookie_list(header_dict: dict):
     """
@@ -43,7 +58,7 @@ def print_cookie_list(header_dict: dict):
     else:
         print('No cookies set')
 
-def parse_set_cookie(set_cookie_str):
+def parse_set_cookie(set_cookie_str: str):
     """
     Parse a "Set-Cookie" header string into a dictionary of cookie attributes.
 
@@ -71,7 +86,6 @@ def parse_set_cookie(set_cookie_str):
 
             # Convert certain attribute values to their proper types
             if key.lower() == 'expires':
-                # Parse Expires attribute as a string (convert to datetime if needed)
                 value = value.strip()
             elif key.lower() == 'max-age':
                 # Parse Max-Age attribute as an integer
@@ -117,7 +131,7 @@ def check_http2_support(hostname: str):
     else:
         return 'No'
 
-def parse_http_headers(headers_str):
+def parse_http_headers(headers_str: str):
     """
     Parse a string of HTTP headers into a dictionary.
 
@@ -155,11 +169,9 @@ def parse_http_headers(headers_str):
 
     return headers
 
-def parse_url(url):
+def parse_url(url: str):
     """
     Parse a URL and extract its path and hostname.
-
-    If the URL doesn't include a scheme, "http://" is added by default.
 
     Parameters:
     url (str): The URL to parse.
@@ -187,7 +199,7 @@ def parse_url(url):
 
     return f"{path}", f"{hostname}"
 
-def decode_until_null(byte_string):
+def decode_until_null(byte_string: bytes):
     """
     Decode a byte string until a null character (\x00) is encountered and remove trailing \r\n\r\n, if present.
 
@@ -209,9 +221,9 @@ def decode_until_null(byte_string):
 
     return decoded_text
 
-def send_get_request(url):
+def send_request(url):
     """
-    Send an HTTP GET request to a given URL and print the response.
+    Send an HTTP GET request to a given URL and print details from the server response.
 
     Parameters:
     url (str): The URL to which the request will be sent.
@@ -225,7 +237,7 @@ def send_get_request(url):
     # Create an SSL context to establish a secure connection
     context = ssl.create_default_context()
 
-    # Create a socket and wrap it with SSL, specifying the server's hostname
+    # Create a socket and wrap it with SSL
     conn = context.wrap_socket(socket.socket(socket.AF_INET), server_hostname=hostname)
     
     try:
@@ -233,7 +245,6 @@ def send_get_request(url):
         conn.connect((hostname, 443))
 
         # Send an HTTP GET request to the server
-        # Construct the HTTP GET request with the 'Connection: Keep-Alive' header
         print('---Request Begin---')
         request = b"GET " + path.encode() + b" HTTP/1.1\r\n"
         request += b"Host: " + hostname.encode() + b"\r\n"
@@ -246,14 +257,19 @@ def send_get_request(url):
         full_msg = b""
         redirect = False
         header_dict = {}
+
         while True:
             response_chunk = conn.recv(1024)
+            # Continue receiving until all chunks received
             if not response_chunk:
+                # If there is a newline, must be we have both header and body
                 if b"\r\n\r\n" in full_msg:
                     headers, body = full_msg.split(b"\r\n\r\n", 1)
                     print('---Response headers---')
                     header_dict = parse_http_headers(headers.decode())
                     if 'Location' in header_dict:
+                        # We've been given a redirect location
+                        # So use that once the entire message has been output
                         redirect = True
                     print(headers.decode())
                     print('---Response body---')
@@ -262,6 +278,7 @@ def send_get_request(url):
                     else:
                         print(body.decode())             
                 else:
+                    # Received no payload. So only print out the headers.
                     print('---Response headers---')
                     header_dict = parse_http_headers(full_msg.decode())
                     if 'Location' in header_dict:
@@ -271,6 +288,7 @@ def send_get_request(url):
                 break
             full_msg += response_chunk
 
+        # Now have all the information we need, so print out the required information
         print(f"website: {hostname}")
         http2_support = check_http2_support(hostname)
         print(f"1. Supports http2: {http2_support}")
@@ -278,12 +296,12 @@ def send_get_request(url):
         print_authorization_status(full_msg.decode())
         if redirect:
             print(f"\r\n---Redirected to {header_dict['Location']}---\r\n")
-            send_get_request(header_dict['Location'])
+            send_request(header_dict['Location'])
 
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
-        # Print out relevant details and close out connection
+        # Close out connection
         conn.close()
 
 if __name__ == "__main__":
@@ -292,4 +310,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     url = sys.argv[1]
-    send_get_request(url)
+    send_request(url)
