@@ -272,7 +272,7 @@ def send_request(url):
                         # So use that once the entire message has been output
                         redirect = True
                     print(headers.decode())
-                    print('---Response body---')
+                    print('\n---Response body---')
                     if b"\r\n" in body:
                         print(decode_until_null(body))
                     else:
@@ -284,7 +284,7 @@ def send_request(url):
                     if 'Location' in header_dict:
                         redirect = True
                     print(full_msg.decode())
-                    print('---Response body---')
+                    print('\n---Response body---')
                 break
             full_msg += response_chunk
 
