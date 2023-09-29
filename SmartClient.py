@@ -30,6 +30,28 @@ def parse_url(url):
 
     return path, f"{hostname}"
 
+def decode_until_null(byte_string):
+    """
+    Decode a byte string until a null character (\x00) is encountered and remove trailing \r\n\r\n, if present.
+
+    Args:
+        byte_string (bytes): The input byte string to decode.
+
+    Returns:
+        str: The decoded text as a string.
+    """
+    decoded_text = ""
+    for byte in byte_string:
+        if byte == 0x00:
+            break  # Stop decoding when null character is reached
+        decoded_text += chr(byte)
+
+    # Remove the trailing \r\n\r\n, if present
+    if decoded_text.endswith("\n0\r\n\r\n"):
+        decoded_text = decoded_text[:-6]
+
+    return decoded_text
+
 def send_get_request(url):
     """
     Send an HTTP GET request to a given URL and print the response.
@@ -73,7 +95,10 @@ def send_get_request(url):
                     print('---Response headers---')
                     print(headers.decode())
                     print('---Response body---')
-                    print(body.decode())              
+                    if b"\r\n" in body:
+                        print(decode_until_null(body))
+                    else:
+                        print(body.decode(encoding='utf-8', errors='ignore'))              
                 else:
                     print('---Response headers---')
                     print(full_msg.decode())
