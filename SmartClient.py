@@ -2,6 +2,81 @@ import socket
 import ssl
 import sys
 
+def print_cookie_list(header_dict: dict):
+    """
+    Print a list of cookies from the given header dictionary.
+
+    Args:
+        header_dict (dict): A dictionary containing HTTP headers.
+
+    Example:
+        >>> header_dict = {'Set-Cookie': [{'cookie1': 'value1', 'Domain': 'example.com', 'HttpOnly': True},
+        ...                                {'cookie2': 'value2', 'Path': '/path', 'Secure': True}]}
+
+        >>> print_cookie_list(header_dict)
+        2. List of cookies:
+        cookie name: cookie1, cookie value: value1, Domain: example.com, HttpOnly: True
+        cookie name: cookie2, cookie value: value2, Path: /path, Secure: True
+    """
+    print("2. List of cookies:")
+    if 'Set-Cookie' in header_dict:
+        for cookie in header_dict['Set-Cookie']:
+            name_property_printed = False
+            line = ""
+            for attr, value in cookie.items():
+                if not name_property_printed:
+                    line += f"cookie name: {attr}, cookie value: {value}, "
+                    name_property_printed = True
+                else:
+                    line += f"{attr}: {value}, "
+            print(line.rstrip().rstrip(','))
+    else:
+        print('No cookies set')
+
+def parse_set_cookie(set_cookie_str):
+    """
+    Parse a "Set-Cookie" header string into a dictionary of cookie attributes.
+
+    Args:
+        set_cookie_str (str): The string received from a "Set-Cookie" header.
+
+    Returns:
+        dict: A dictionary containing cookie attributes as key-value pairs.
+
+    Example:
+        >>> set_cookie_str = "myCookie=myValue; Domain=example.com; Expires=Wed, 21 Oct 2023 07:28:00 GMT; HttpOnly"
+        >>> cookie_attributes = parse_set_cookie(set_cookie_str)
+        >>> print(cookie_attributes)
+        >>> {'myCookie': 'myValue', 'Domain': 'example.com', 'Expires': 'Wed, 21 Oct 2023 07:28:00 GMT', 'HttpOnly': True}
+    """
+    attributes = {}
+    parts = set_cookie_str.split(';')
+
+    for part in parts:
+        key_value_pair = part.strip().split('=', 1)
+        if len(key_value_pair) == 2:
+            key, value = key_value_pair
+            key = key.strip()
+            value = value.strip()
+
+            # Convert certain attribute values to their proper types
+            if key.lower() == 'expires':
+                # Parse Expires attribute as a string (convert to datetime if needed)
+                value = value.strip()
+            elif key.lower() == 'max-age':
+                # Parse Max-Age attribute as an integer
+                try:
+                    value = int(value)
+                except ValueError:
+                    pass
+            elif key.lower() in ('httponly', 'secure', 'samesite'):
+                # Parse HttpOnly, Secure, and SameSite attributes as boolean
+                value = True
+
+            attributes[key] = value
+
+    return attributes
+
 def check_http2_support(hostname: str):
     """
     Check if a given hostname supports HTTP/2 (h2) protocol.
@@ -49,13 +124,24 @@ def parse_http_headers(headers_str):
         >>> {'Content-Type': 'text/html', 'Server': 'Apache', 'Content-Length': '123'}
     """
     headers = {}
+    cookies = []
     lines = headers_str.split('\r\n')
 
     for line in lines:
         parts = line.split(': ', 1)
         if len(parts) == 2:
             key, value = parts
-            headers[key] = value
+            if key in headers:
+                # If the key already exists, check if it's "Set-Cookie"
+                if key == 'Set-Cookie':
+                    cookie_dict = parse_set_cookie(value)
+                    cookies.append(cookie_dict)
+                    headers[key] = cookies
+                else:
+                    # If it's not "Set-Cookie," store the value normally
+                    headers[key] = value
+            else:
+                headers[key] = value
 
     return headers
 
@@ -175,18 +261,19 @@ def send_get_request(url):
                 break
             full_msg += response_chunk
 
+        print(f"website: {hostname}")
+        http2_support = check_http2_support(hostname)
+        print(f"1. Supports http2: {http2_support}")
+        print_cookie_list(header_dict)
+        if redirect:
+            print(f"\r\n---Redirected to {header_dict['Location']}---\r\n")
+            send_get_request(header_dict['Location'])
+
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
         # Print out relevant details and close out connection
-        print(f"website: {hostname}")
         conn.close()
-        http2_support = check_http2_support(hostname)
-        print(f"1. Supports http2: {http2_support}")
-        print(header_dict)
-        if redirect:
-            print(f"\r\n---Redirected to {header_dict['Location']}---\r\n")
-            send_get_request(header_dict['Location'])
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
