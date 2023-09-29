@@ -2,6 +2,16 @@ import socket
 import ssl
 import sys
 
+def print_authorization_status(response):
+    if '401 Unauthorized' in response:
+        print("3. Password protected: yes")
+    elif '403 Not authenticated' in response:
+        print("3. Password protected: yes")
+    elif '400 Forbidden' in response:
+        print("3. Password protected: yes")
+    else:
+        print(f"Password protected: no")
+
 def print_cookie_list(header_dict: dict):
     """
     Print a list of cookies from the given header dictionary.
@@ -265,6 +275,7 @@ def send_get_request(url):
         http2_support = check_http2_support(hostname)
         print(f"1. Supports http2: {http2_support}")
         print_cookie_list(header_dict)
+        print_authorization_status(full_msg.decode())
         if redirect:
             print(f"\r\n---Redirected to {header_dict['Location']}---\r\n")
             send_get_request(header_dict['Location'])
