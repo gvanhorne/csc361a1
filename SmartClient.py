@@ -109,6 +109,7 @@ def send_get_request(url):
         print(f"An error occurred: {e}")
     finally:
         # Close the connection when done
+        print(f"website: {hostname}")
         conn.close()
 
 if __name__ == "__main__":
