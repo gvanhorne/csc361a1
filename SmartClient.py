@@ -18,14 +18,15 @@ def print_authorization_status(response: str):
     status codes related to authorization and prints whether the resource
     is password protected or not.
     """
+    response = decode_until_null(response)
     if '401 Unauthorized' in response:
-        print("3. Password protected: yes")
+        print("3. Password protected: Yes")
     elif '403 Not authenticated' in response:
-        print("3. Password protected: yes")
+        print("3. Password protected: Yes")
     elif '400 Forbidden' in response:
-        print("3. Password protected: yes")
+        print("3. Password protected: Yes")
     else:
-        print("3. Password protected: no")
+        print("3. Password protected: No")
 
 def print_cookie_list(header_dict: dict):
     """
@@ -276,7 +277,8 @@ def send_request(url):
                     if b"\r\n" in body:
                         print(decode_until_null(body))
                     else:
-                        print(body.decode())             
+                        print(body.decode())
+                    print()
                 else:
                     # Received no payload. So only print out the headers.
                     print('---Response headers---')
@@ -293,7 +295,7 @@ def send_request(url):
         http2_support = check_http2_support(hostname)
         print(f"1. Supports http2: {http2_support}")
         print_cookie_list(header_dict)
-        print_authorization_status(full_msg.decode())
+        print_authorization_status(full_msg)
         if redirect:
             print(f"\r\n---Redirected to {header_dict['Location']}---\r\n")
             send_request(header_dict['Location'])
