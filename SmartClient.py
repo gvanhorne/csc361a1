@@ -1,6 +1,23 @@
 import socket
 import ssl
 import sys
+def check_http2_support(hostname: str):
+    """
+    """
+     # Parse the URL
+    path, hostname = parse_url(url)
+
+    # Create an SSL context to establish a secure connection
+    context = ssl.create_default_context()
+    context.set_alpn_protocols(['http/1.1', 'h2'])
+    # Create a socket and wrap it with SSL, specifying the server's hostname
+    conn = context.wrap_socket(socket.socket(socket.AF_INET), server_hostname=hostname)
+    conn.connect((hostname, 443))
+    protocol = conn.selected_alpn_protocol()
+    if protocol == 'h2':
+        return 'Yes'
+    else:
+        return 'No'
 
 def parse_url(url):
     """
@@ -99,7 +116,7 @@ def send_get_request(url):
                     if b"\r\n" in body:
                         print(decode_until_null(body))
                     else:
-                        print(body.decode(encoding='utf-8', errors='ignore'))              
+                        print(body.decode())             
                 else:
                     print('---Response headers---')
                     print(full_msg.decode())
@@ -112,6 +129,8 @@ def send_get_request(url):
         # Close the connection when done
         print(f"website: {hostname}")
         conn.close()
+        http2_support = check_http2_support(hostname)
+        print(f"1. Supports http2: {http2_support}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

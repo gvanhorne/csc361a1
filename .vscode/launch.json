@@ -10,7 +10,7 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "args": ["www.uvic.com"],
+      "args": ["https://www.google.com"],
       "justMyCode": true
     }
   ]
