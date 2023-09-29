@@ -51,8 +51,7 @@ def parse_url(url):
         url = url[len("https://"):]
 
     # Remove trailing '/' if it exists
-    if url.endswith('/'):
-        url = url.rstrip('/')
+    url = url.strip('/')
         
     # Split the URL into hostname and path
     parts = url.split("/", 1)
@@ -61,7 +60,7 @@ def parse_url(url):
         path = "/"
     else:
         hostname, path = parts
-        path = path[len("/"):]
+        path = f"/{path}"
 
     return f"{path}", f"{hostname}"
 
