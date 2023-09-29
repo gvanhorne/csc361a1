@@ -27,8 +27,9 @@ def parse_url(url):
         path = "/"
     else:
         hostname, path = parts
+        path = path[len("/"):]
 
-    return f"/{path}", f"{hostname}"
+    return f"{path}", f"{hostname}"
 
 def decode_until_null(byte_string):
     """
@@ -70,7 +71,7 @@ def send_get_request(url):
 
     # Create a socket and wrap it with SSL, specifying the server's hostname
     conn = context.wrap_socket(socket.socket(socket.AF_INET), server_hostname=hostname)
-
+    
     try:
         # Connect to the server on port 443 (HTTPS)
         conn.connect((hostname, 443))
