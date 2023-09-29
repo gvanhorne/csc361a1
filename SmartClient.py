@@ -68,11 +68,15 @@ def send_get_request(url):
         while True:
             response_chunk = conn.recv(1024)
             if not response_chunk:
-                headers, body = full_msg.split(b"\r\n\r\n", 1)
-                print('---Response headers---')
-                print(headers.decode())
-                print('---Response body---')
-                print(body.decode())
+                if b"\r\n\r\n" in full_msg:
+                    headers, body = full_msg.split(b"\r\n\r\n", 1)
+                    print('---Response headers---')
+                    print(headers.decode())
+                    print('---Response body---')
+                    print(body.decode())              
+                else:
+                    print('---Response headers---')
+                    print(full_msg.decode())
                 break
             full_msg += response_chunk
 
