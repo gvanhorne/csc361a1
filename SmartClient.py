@@ -1,6 +1,7 @@
 import socket
 import ssl
 import sys
+
 def check_http2_support(hostname: str):
     """
     """
@@ -19,6 +20,18 @@ def check_http2_support(hostname: str):
     else:
         return 'No'
 
+def parse_http_headers(headers_str):
+    headers = {}
+    lines = headers_str.split('\r\n')
+
+    for line in lines:
+        parts = line.split(': ', 1)
+        if len(parts) == 2:
+            key, value = parts
+            headers[key] = value
+
+    return headers
+
 def parse_url(url):
     """
     Parse a URL and extract its path and hostname.
@@ -36,6 +49,10 @@ def parse_url(url):
         url = url[len("http://"):]
     elif url.startswith('https://'):
         url = url[len("https://"):]
+
+    # Remove trailing '/' if it exists
+    if url.endswith('/'):
+        url = url.rstrip('/')
         
     # Split the URL into hostname and path
     parts = url.split("/", 1)
@@ -105,12 +122,17 @@ def send_get_request(url):
         print('HTTP request sent, awaiting response. . .\n')
 
         full_msg = b""
+        redirect = False
+        header_dict = {}
         while True:
             response_chunk = conn.recv(1024)
             if not response_chunk:
                 if b"\r\n\r\n" in full_msg:
                     headers, body = full_msg.split(b"\r\n\r\n", 1)
                     print('---Response headers---')
+                    header_dict = parse_http_headers(headers.decode())
+                    if 'Location' in header_dict:
+                        redirect = True
                     print(headers.decode())
                     print('---Response body---')
                     if b"\r\n" in body:
@@ -119,18 +141,25 @@ def send_get_request(url):
                         print(body.decode())             
                 else:
                     print('---Response headers---')
+                    header_dict = parse_http_headers(full_msg.decode())
+                    if 'Location' in header_dict:
+                        redirect = True
                     print(full_msg.decode())
+                    print('---Response body---')
                 break
             full_msg += response_chunk
 
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
-        # Close the connection when done
+        # Print out relevant details and close out connection
         print(f"website: {hostname}")
         conn.close()
         http2_support = check_http2_support(hostname)
         print(f"1. Supports http2: {http2_support}")
+        if redirect:
+            print(f"\r\n---Redirected to {header_dict['Location']}---\r\n")
+            send_get_request(header_dict['Location'])
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
