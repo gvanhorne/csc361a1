@@ -28,7 +28,7 @@ def parse_url(url):
     else:
         hostname, path = parts
 
-    return path, f"{hostname}"
+    return f"/{path}", f"{hostname}"
 
 def decode_until_null(byte_string):
     """
