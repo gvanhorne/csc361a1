@@ -4,6 +4,18 @@ import sys
 
 def check_http2_support(hostname: str):
     """
+    Check if a given hostname supports HTTP/2 (h2) protocol.
+
+    Args:
+        hostname (str): The hostname or domain name to check for HTTP/2 support.
+
+    Returns:
+        str: Returns 'Yes' if the hostname supports HTTP/2 (h2) protocol,
+             'No' otherwise.
+
+    Example:
+        result = check_http2_support("example.com")
+        print(result)  # Output will be either 'Yes' or 'No' indicating HTTP/2 support.
     """
      # Parse the URL
     path, hostname = parse_url(url)
@@ -21,6 +33,21 @@ def check_http2_support(hostname: str):
         return 'No'
 
 def parse_http_headers(headers_str):
+    """
+    Parse a string of HTTP headers into a dictionary.
+
+    Args:
+        headers_str (str): The string containing HTTP headers.
+
+    Returns:
+        dict: A dictionary where the keys are header names and the values are header values.
+
+    Example:
+        >>> headers_str = "Content-Type: text/html\r\nServer: Apache\r\nContent-Length: 123\r\n"
+        >>> parsed_headers = parse_http_headers(headers_str)
+        >>> print(parsed_headers)
+        >>> {'Content-Type': 'text/html', 'Server': 'Apache', 'Content-Length': '123'}
+    """
     headers = {}
     lines = headers_str.split('\r\n')
 
@@ -156,6 +183,7 @@ def send_get_request(url):
         conn.close()
         http2_support = check_http2_support(hostname)
         print(f"1. Supports http2: {http2_support}")
+        print(header_dict)
         if redirect:
             print(f"\r\n---Redirected to {header_dict['Location']}---\r\n")
             send_get_request(header_dict['Location'])
